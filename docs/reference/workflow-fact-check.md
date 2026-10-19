@@ -32,7 +32,7 @@ Missing `target` returns the usage string.
 | Extract | 1 | no | Every historical claim, depiction and name, with where it is and its lens. A target with none returns `done` at once |
 | Assess | 1 per lens used, in parallel | no | Lenses `history`, `material`, `language`, `representation`; a verdict per claim (supported, departure-recorded, error, anachronism, unsupported, representation), severity, evidence, fix |
 | Confirm | 0-1, independent | no | Runs only when there are errors, anachronisms or representation findings: opens the evidence and checks verdict, severity and fix |
-| Docs | 1 | yes (branch) | The review page (counts, decisions needed, every claim) and proposed departures for the owner; corrects or withdraws disputed findings; commits |
+| Docs | 1 | yes (branch) | The review page (counts, decisions needed, every claim) and proposed departures for the owner; corrects or withdraws disputed findings and returns what it changed; commits |
 | Check | 1-3, independent; one revision edits | no | Every finding carried, disputes handled, departures written as proposals, target unchanged, Diataxis form |
 | Hand off | 1 | no (pushes) | Pushes; updates or opens a draft `docs:` PR. Does not mark it ready or merge |
 
@@ -57,7 +57,8 @@ anachronism; `low` background detail; `none` supported or recorded.
 |---|---|
 | `status` | `done`; `partial` (a lens returned nothing; see `unassessedLenses` and `next`); `unverified`; `blocked` with `open` or `reason` |
 | `target`, `scope` | What was checked |
-| `counts`, `findings` | Counts by verdict; every finding, most severe first |
+| `counts`, `findings` | Counts by verdict; every finding as the review page records it, most severe first |
+| `withdrawn` | Findings the page withdrew after the independent confirmation |
 | `proposedDepartures` | Departures for the owner to accept or fix |
 | `docs`, `undocumented`, `notes` | Pages touched, gaps, non-blocking notes |
 | `handoff` | The engineering-practices hand-off object |

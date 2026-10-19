@@ -213,7 +213,9 @@ Open each cited source at the place cited (the holder's own catalogue or digital
   { schema: SOURCECHECK, phase: 'Sources', label: 'sources', independent: true })
 if (!srcCheck) return { status: 'unverified', reason: 'source check returned nothing', research }
 strings(srcCheck.notes).forEach((n) => notes.push('sources: ' + n))
-const sourceProblems = strings(srcCheck.problems)
+const sourceProblems = strings(srcCheck.problems).length || srcCheck.pass
+  ? strings(srcCheck.problems)
+  : ['the source check failed without naming a problem; cite only claims whose sources you can open at the place cited, and grade the rest unknown']
 
 phase('Write')
 const writeBrief = (extra) =>

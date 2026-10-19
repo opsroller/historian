@@ -226,7 +226,9 @@ Open each item's holder record. Check: 1) the record exists and matches what, id
   { schema: VET, phase: 'Vet', label: 'vet', independent: true })
 if (!vet) return { status: 'unverified', reason: 'item check returned nothing', sets }
 strings(vet.notes).forEach((n) => notes.push('vet: ' + n))
-const vetProblems = strings(vet.problems)
+const vetProblems = strings(vet.problems).length || vet.pass
+  ? strings(vet.problems)
+  : ['the item check failed without naming a problem; keep only items whose holder record you can open and that match it']
 const sensitive = strings(vet.sensitive)
 
 phase('Write')

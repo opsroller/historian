@@ -168,9 +168,10 @@ const DOCS = {
     branch: { type: 'string' },
     pages: { type: 'array', items: { type: 'object', properties: { path: { type: 'string' }, kind: { type: 'string', enum: ['tutorial', 'how-to', 'reference', 'explanation'] } }, required: ['path', 'kind'] } },
     proposedDepartures: { type: 'array', items: { type: 'string' }, description: 'departures for the owner to accept or fix, written as proposals' },
+    changes: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, withdrawn: { type: 'boolean' }, verdict: { type: 'string', enum: VERDICTS }, severity: { type: 'string', enum: ['high', 'medium', 'low', 'none'] }, fix: { type: 'string' } }, required: ['id', 'withdrawn'] }, description: 'every finding the page withdrew or whose verdict, severity or fix differs from the input, with its final values' },
     undocumented: { type: 'array', items: { type: 'string' } },
   },
-  required: ['branch', 'pages', 'proposedDepartures', 'undocumented'],
+  required: ['branch', 'pages', 'proposedDepartures', 'changes', 'undocumented'],
 }
 const CHECK = { type: 'object', properties: { pass: { type: 'boolean' }, problems: { type: 'array', items: { type: 'string' } }, notes: { type: 'array', items: { type: 'string' } } }, required: ['pass', 'problems'] }
 const HANDOFF = { type: 'object', properties: { branch: { type: 'string' }, pr: { type: 'string' }, head_sha: { type: 'string' }, links_ok: { type: 'boolean', description: 'every relative link in the pages resolves' }, problem: { type: 'string' } }, required: ['branch', 'links_ok'] }
@@ -224,7 +225,7 @@ For each finding open the cited evidence and check: 1) the evidence exists as ci
 phase('Docs')
 const docsBrief = (extra) =>
   `${ONBOARD} Write the historical review per the historian skill history-for-design. ${where} Output: ${output}. Target: ${target}. Owner of the target: ${owner}. Scope: ${ex.scope}. Findings, most severe first: ${JSON.stringify(findings)}.
-${confirmProblems.length ? `The independent confirmation disputed these findings: correct each to what the evidence supports, or withdraw it and say so: ${JSON.stringify(confirmProblems)}. ` : ''}The page leads with the counts by verdict and severity and the findings that need the owner's decision, then a table of every claim (where, claim, verdict, severity, evidence, fix), then the claims that are supported. Every "record as a departure" and every unsupported invention becomes a proposed entry for the project's departures record (what the product does, what history says, why it might depart, who must decide), marked as proposed: the owner decides, not you. Do not edit the target. ${DOCS_FRAGMENT} Commit on the branch with a Conventional Commit (docs:). Do not push.${extra}`
+${confirmProblems.length ? `The independent confirmation disputed these findings: correct each to what the evidence supports, or withdraw it and say so on the page: ${JSON.stringify(confirmProblems)}. ` : ''}Return under changes every finding you withdrew or whose verdict, severity or fix you changed, with its final values. The page leads with the counts by verdict and severity and the findings that need the owner's decision, then a table of every claim (where, claim, verdict, severity, evidence, fix), then the claims that are supported. Every "record as a departure" and every unsupported invention becomes a proposed entry for the project's departures record (what the product does, what history says, why it might depart, who must decide), marked as proposed: the owner decides, not you. Do not edit the target. ${DOCS_FRAGMENT} Commit on the branch with a Conventional Commit (docs:). Do not push.${extra}`
 let docs = await agent(docsBrief(''), { schema: DOCS, phase: 'Docs', label: 'docs' })
 if (!docs) return { status: 'blocked', reason: 'docs step failed; the review is not done without its record', findings }
 const pagesOf = (d) => (Array.isArray(d.pages) ? d.pages : []).map((p) => (p && typeof p === 'object'
@@ -260,6 +261,16 @@ const handoff = await agent(
 if (!handoff || !handoff.branch) return { status: 'blocked', reason: 'hand-off failed; the review is committed on ' + docs.branch + ' but may not be pushed', findings, notes }
 if (!handoff.links_ok) return { status: 'blocked', open: ['broken links on the pushed head' + (handoff.problem ? ': ' + handoff.problem : '')], findings, notes }
 
+// The page is the record: apply what Docs (or its revision) withdrew or changed.
+const withdrawn = []
+;(Array.isArray(docs.changes) ? docs.changes : []).forEach((c) => {
+  if (!c || !c.id) return
+  const i = findings.findIndex((f) => f.id === c.id)
+  if (i < 0) return
+  if (c.withdrawn) { withdrawn.push(findings[i]); findings.splice(i, 1); return }
+  ;['verdict', 'severity', 'fix'].forEach((k) => { if (typeof c[k] === 'string' && c[k]) findings[i][k] = c[k] })
+})
+findings.sort((a, b) => (RANK[a.severity] ?? 9) - (RANK[b.severity] ?? 9))
 const counts = VERDICTS.reduce((o, v) => Object.assign(o, { [v]: findings.filter((f) => f.verdict === v).length }), {})
 const toFix = findings.filter((f) => f.severity !== 'none' && f.verdict !== 'supported' && f.verdict !== 'departure-recorded')
 return {
@@ -268,6 +279,7 @@ return {
   scope: ex.scope,
   counts,
   findings,
+  withdrawn,
   unassessedLenses: unassessed,
   proposedDepartures: strings(docs.proposedDepartures),
   docs: docPaths,
