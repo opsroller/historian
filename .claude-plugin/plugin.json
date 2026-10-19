@@ -1,0 +1,27 @@
+{
+  "name": "historian",
+  "version": "0.1.0",
+  "description": "Historian and researcher role: answers questions about the past from primary and secondary sources judged for provenance, perspective and credibility; turns the research into sourced briefs, visual and material reference sets and fact checks that drive a product's design, art, writing and direction; starts from Latin American history (Indigenous civilizations before contact, the colonial era, independence and the modern nations) and works in any period or region; keeps evidence, interpretation and invention apart; and treats living communities' heritage with care, credit and consent.",
+  "author": {
+    "name": "opsroller"
+  },
+  "repository": "https://github.com/opsroller/historian",
+  "license": "GPL-2.0-or-later",
+  "keywords": [
+    "role",
+    "job-function",
+    "historian",
+    "research",
+    "history",
+    "primary-sources",
+    "source-criticism",
+    "citation",
+    "fact-check",
+    "reference",
+    "material-culture",
+    "cultural-heritage",
+    "latin-america",
+    "mesoamerica",
+    "public-history"
+  ]
+}
